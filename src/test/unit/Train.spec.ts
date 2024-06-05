@@ -7,9 +7,9 @@ describe('Train', () => {
     it('should create a train with the given name, capacity, and location', () => {
         const location = new Station('A');
         const train = new Train('T', 6, location);
-        expect(train.trainName).to.equal('T');
+        expect(train.name).to.equal('T');
         expect(train.capacityInKg).to.equal(6);
-        expect(train.startingStation).to.equal(location);
+        expect(train.location).to.equal(location);
     });
 
     it('should load a package if within capacity', () => {

@@ -3,6 +3,7 @@ import { Station } from './models/Station';
 import { Track } from './models/Track';
 import { Package } from './models/Package';
 import { Train } from './models/Train';
+import { Result } from './models/Result';
 
 export class Network {
     stations: Station[] = [];
@@ -129,12 +130,45 @@ export class Network {
         return closestStation!;
     }
 
-    run() {
+    run(): Result {
         let totalTime = 0;
-        const trainMovements : string[] = [];
+        const trainOperations : string[] = [];
         const errors : string[] = [];
 
-        // TODO: Implement the logic for moving the train, picking up, and dropping off packages
+        // Implement the logic for moving the train, picking up, and dropping off packages
+        const train = this.trains[0];
+        const packageToSend = this.packages[0];
 
+        const pathToPickup = this.findShortestPath(train.location, packageToSend.location);
+        if (!pathToPickup) {
+            errors.push(`Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
+            return { trainOperations, totalTime, errors };
+        }
+        
+        // Move the train, accumulate time
+        totalTime += pathToPickup.time;
+        train.location = packageToSend.location;
+        trainOperations.push(`${train.name} moved from ${pathToPickup.path[0].name} to ${pathToPickup.path[pathToPickup.path.length - 1].name} in ${pathToPickup.time} minutes.`);
+
+        // Collect package
+        if (train.canLoad(packageToSend)) {
+            train.trainLoad.push(packageToSend);
+            trainOperations.push(`${train.name} picked up ${packageToSend.name} from ${packageToSend.location.name}. ${train.name} located at station ${train.location.name}.`)
+        }
+
+        const pathToDropOff = this.findShortestPath(packageToSend.location, packageToSend.destination);
+        if (!pathToDropOff) {
+            errors.push(`Destination for Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
+        }
+
+        totalTime += pathToDropOff?.time!;
+        train.location = packageToSend.destination;
+        trainOperations.push(`${train.name} moved from ${pathToDropOff?.path[0].name} to ${pathToDropOff?.path[pathToDropOff?.path.length - 1].name} in ${pathToDropOff?.time} minutes.`);
+
+        // Drop off package
+        train.trainLoad.shift();
+        trainOperations.push(`${train.name} dropped off ${packageToSend.name} at ${packageToSend.destination.name}. ${train.name} is located at station ${train.location.name}.`)
+
+        return {trainOperations, totalTime, errors};
     }
 }

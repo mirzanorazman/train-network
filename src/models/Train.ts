@@ -1,15 +1,15 @@
 import { Station } from "./Station";
 import { Package } from "./Package";
 export class Train {
-    trainName : string;
+    name : string;
     capacityInKg : number;
-    startingStation : Station;
+    location : Station;
     trainLoad: Package[] = [];
 
     constructor(trainName: string, capacityInKg: number, startingStation: Station) {
-        this.trainName = trainName;
+        this.name = trainName;
         this.capacityInKg = capacityInKg;
-        this.startingStation = startingStation;
+        this.location = startingStation;
     }
 
     canLoad(packageObj: Package) : boolean {
