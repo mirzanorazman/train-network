@@ -5,7 +5,7 @@ import { Track } from '../../models/Track';
 import { Package } from '../../models/Package';
 import { Train } from '../../models/Train'; 
 
-describe('Network', () => {
+describe('Network-Simple', () => {
     it('should load data from JSON file', () => {
         const network = new Network();
         network.loadFromFile('src/data/network-simple.json');
@@ -70,4 +70,14 @@ describe('Network', () => {
         expect(result.totalTime).to.equal(70);
     });
 
+    // TODO: Negative test cases
+    // 1. Invalid package deliver location/destination
+    // 2. Invalid train location
+    // 3. Unreachable train-package destination
+
+
 });
+
+describe('Network-Complex', () => {
+
+})
