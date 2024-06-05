@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { Station } from '../models/Station';
-import { Track } from '../models/Track';
+import { Station } from '../../models/Station';
+import { Track } from '../../models/Track';
 
 describe('Track', () => {
     it('should create a track with the given start, end, and time', () => {

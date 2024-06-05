@@ -1,9 +1,9 @@
 import { expect } from 'chai';
-import { Network } from '../Network';
-import { Station } from '../models/Station';
-import { Track } from '../models/Track';
-import { Package } from '../models/Package';
-import { Train } from '../models/Train'; 
+import { Network } from '../../Network';
+import { Station } from '../../models/Station';
+import { Track } from '../../models/Track';
+import { Package } from '../../models/Package';
+import { Train } from '../../models/Train'; 
 
 describe('Network', () => {
     it('should load data from JSON file', () => {
