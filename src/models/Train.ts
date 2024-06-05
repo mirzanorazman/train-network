@@ -1,5 +1,5 @@
 import { Station } from "./Station";
-
+import { Package } from "./Package";
 export class Train {
     trainName : string;
     capacityInKg : number;
@@ -10,4 +10,8 @@ export class Train {
         this.capacityInKg = capacityInKg;
         this.startingStation = startingStation;
     }
+
+    // canLoad(package: Package) : boolean {
+
+    // }
 }

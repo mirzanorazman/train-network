@@ -1,0 +1,17 @@
+{
+    "stations": [
+        {"name": "A"},
+        {"name": "B"},
+        {"name": "C"}
+    ],
+    "tracks": [
+        {"start": "A", "end": "B", "time": 30},
+        {"start": "B", "end": "C", "time": 10}
+    ],
+    "packages": [
+        {"name": "Q", "weight": 5, "location": "A", "destination": "C"}
+    ],
+    "trains": [
+        {"name": "T", "capacity": 6, "location": "B"}
+    ]
+}
