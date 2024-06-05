@@ -4,6 +4,7 @@ export class Train {
     trainName : string;
     capacityInKg : number;
     startingStation : Station;
+    trainLoad: Package[] = [];
 
     constructor(trainName: string, capacityInKg: number, startingStation: Station) {
         this.trainName = trainName;
@@ -11,7 +12,8 @@ export class Train {
         this.startingStation = startingStation;
     }
 
-    // canLoad(package: Package) : boolean {
-
-    // }
+    canLoad(packageObj: Package) : boolean {
+        let currentLoad = this.trainLoad.reduce((totalLoad, p) => totalLoad + p.weight, 0);
+        return (currentLoad + packageObj.weight) <= this.capacityInKg;
+    }
 }

@@ -5,8 +5,8 @@
         {"name": "C"}
     ],
     "tracks": [
-        {"start": "A", "end": "B", "time": 30},
-        {"start": "B", "end": "C", "time": 10}
+        {"name": "T1", "start": "A", "end": "B", "journeyTimeInMinutes": 30},
+        {"name": "T2", "start": "B", "end": "C", "journeyTimeInMinutes": 10}
     ],
     "packages": [
         {"name": "Q", "weight": 5, "location": "A", "destination": "C"}
