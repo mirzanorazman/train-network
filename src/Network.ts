@@ -78,6 +78,10 @@ export class Network {
 
         while (unvisited.size > 0) {
             let current: Station = this.getClosestStation(unvisited, distances)
+            
+            if (!current) {
+                return null; // Possible disconnected node
+            }
             if (current === end) break;
 
             unvisited.delete(current);
@@ -133,16 +137,20 @@ export class Network {
     run(): Result {
         let totalTime = 0;
         const trainOperations : string[] = [];
-        const errors : string[] = [];
 
         // Implement the logic for moving the train, picking up, and dropping off packages
+        if (!this.trains.length) {
+            throw new Error(`There are no available trains for transport.`)
+        }
+        if (!this.packages.length) {
+            throw new Error(`There are no available packages to pickup.`)
+        }
         const train = this.trains[0];
         const packageToSend = this.packages[0];
 
         const pathToPickup = this.findShortestPath(train.location, packageToSend.location);
         if (!pathToPickup) {
-            errors.push(`Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
-            return { trainOperations, totalTime, errors };
+            throw new Error(`Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
         }
         
         // Move the train, accumulate time
@@ -158,7 +166,7 @@ export class Network {
 
         const pathToDropOff = this.findShortestPath(packageToSend.location, packageToSend.destination);
         if (!pathToDropOff) {
-            errors.push(`Destination for Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
+            throw new Error(`Destination for Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
         }
 
         totalTime += pathToDropOff?.time!;
@@ -169,6 +177,6 @@ export class Network {
         train.trainLoad.shift();
         trainOperations.push(`${train.name} dropped off ${packageToSend.name} at ${packageToSend.destination.name}. ${train.name} is located at station ${train.location.name}.`)
 
-        return {trainOperations, totalTime, errors};
+        return {trainOperations, totalTime};
     }
 }
