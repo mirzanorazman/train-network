@@ -116,6 +116,22 @@ export class Network {
 
     }
 
+    private getReachableTrains(packageObj: Package) : Map<Train, number> {
+        const pathToDropOff = this.findShortestPath(packageObj.location, packageObj.destination);
+        if(!pathToDropOff) {
+            throw new Error(`There is no valid path for Package ${packageObj.name} from ${packageObj.location.name} to ${packageObj.destination.name}.`);
+        }
+
+        const reachableTrains = new Map<Train, number>();
+        for(const train of this.trains) {
+            const path = this.findShortestPath(train.location, packageObj.location);
+            if(!path) break;
+            reachableTrains.set(train, path!.time);
+        }
+
+        return new Map([...reachableTrains.entries()].sort((a, b) => a[1] - b[1]));
+    }
+
     private getNeighbors(station: Station): {station : Station, time: number}[] {
         return this.tracks
             .filter(track => track.start === station)
@@ -137,9 +153,12 @@ export class Network {
         return closestStation!;
     }
 
-    private dropoffPackage(train: Train, packageToSend: Package) {
+    private dropOffPackage(train: Train, packageToSend: Package) {
         train.trainLoad.shift();
         this.trainOperations.push(`${train.name} dropped off ${packageToSend.name} at ${packageToSend.destination.name}. ${train.name} is located at station ${train.location.name}.`);
+
+        // Remove the package from the array
+        this.packages = this.packages.filter(p => p.name !== packageToSend.name);
     }
 
     private moveTrainToDestination(train: Train, packageToSend: Package) {
@@ -163,13 +182,26 @@ export class Network {
     private moveTrainToStation(train: Train, packageToSend: Package) {
         const pathToPickup = this.findShortestPath(train.location, packageToSend.location);
         if (!pathToPickup) {
-            throw new Error(`Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
+            throw new Error(`Package ${packageToSend.name} is unreachable from ${train.location.name} for ${train.name}.`);
         }
 
         // Move the train, accumulate time
         this.totalTime += pathToPickup.time;
         train.location = packageToSend.location;
         this.trainOperations.push(`${train.name} moved from ${pathToPickup.path[0].name} to ${pathToPickup.path[pathToPickup.path.length - 1].name} in ${pathToPickup.time} minutes.`);
+    }
+
+    private transportPackage(reachableTrains: Map<Train, number>, packageObj: Package) {
+        for (const [train, time] of reachableTrains) {
+            if (train.canLoad(packageObj)) {
+                this.moveTrainToStation(train, packageObj);
+                this.pickupPackage(train, packageObj);
+                this.moveTrainToDestination(train, packageObj);
+                this.dropOffPackage(train, packageObj);
+                return;
+            }
+            console.log(`No train can carry package ${packageObj.name} within capacity.`);
+        }
     }
 
     run(): Result {
@@ -180,17 +212,10 @@ export class Network {
             throw new Error(`There are no available packages to pickup.`)
         }
 
-        // while(this.packages.length > 0) {
-        //     this.assignPackagesToTrain();
-        // }
-        
-        const train = this.trains[0];
-        const packageToSend = this.packages[0];
-
-        this.moveTrainToStation(train, packageToSend);
-        this.pickupPackage(train, packageToSend);
-        this.moveTrainToDestination(train, packageToSend);
-        this.dropoffPackage(train, packageToSend);
+        this.packages.forEach(packageObj => {
+            const reachableTrains = this.getReachableTrains(packageObj);
+            this.transportPackage(reachableTrains, packageObj);
+        })
 
         return {trainOperations: this.trainOperations, totalTime: this.totalTime};
     }

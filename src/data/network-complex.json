@@ -7,17 +7,17 @@
         { "name": "E" }
     ],
     "tracks": [
-        { "name": "E1", "start": "A", "end": "B", "time": 20 },
-        { "name": "E2", "start": "B", "end": "C", "time": 15 },
-        { "name": "E3", "start": "C", "end": "D", "time": 30 },
-        { "name": "E4", "start": "D", "end": "E", "time": 10 },
-        { "name": "E5", "start": "A", "end": "C", "time": 25 },
-        { "name": "E6", "start": "C", "end": "E", "time": 40 },
-        { "name": "E7", "start": "B", "end": "D", "time": 15 },
-        { "name": "E8", "start": "B", "end": "E", "time": 20 }
+        { "name": "E1", "start": "A", "end": "B", "journeyTimeInMinutes": 20 },
+        { "name": "E2", "start": "B", "end": "C", "journeyTimeInMinutes": 15 },
+        { "name": "E3", "start": "C", "end": "D", "journeyTimeInMinutes": 30 },
+        { "name": "E4", "start": "D", "end": "E", "journeyTimeInMinutes": 10 },
+        { "name": "E5", "start": "A", "end": "C", "journeyTimeInMinutes": 25 },
+        { "name": "E6", "start": "C", "end": "E", "journeyTimeInMinutes": 40 },
+        { "name": "E7", "start": "B", "end": "D", "journeyTimeInMinutes": 15 },
+        { "name": "E8", "start": "B", "end": "E", "journeyTimeInMinutes": 20 }
         
     ],
-    "deliverables": [
+    "packages": [
         { "name": "P1", "weight": 5, "location": "A", "destination": "D" },
         { "name": "P2", "weight": 3, "location": "B", "destination": "E" },
         { "name": "P3", "weight": 4, "location": "C", "destination": "A" },

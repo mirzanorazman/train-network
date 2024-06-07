@@ -86,7 +86,7 @@ describe('Network-Simple', () => {
         network.trains.push(trainA);
         network.packages.push(packageToSend);
 
-        expect(() => network.run()).to.throw(`Package ${packageToSend.name} is unreachable from ${trainA.location.name}.`);
+        expect(() => network.run()).to.throw(`There is no valid path for Package ${packageToSend.name} from ${packageToSend.location.name} to ${packageToSend.destination.name}.`);
     });
 
     it('should throw an error when there are unreachable package destination' , () => {
@@ -105,7 +105,7 @@ describe('Network-Simple', () => {
         network.trains.push(trainA);
         network.packages.push(packageToSend);
 
-        expect(() => network.run()).to.throw(`Destination for Package ${packageToSend.name} is unreachable from ${packageToSend.location.name}.`);
+        expect(() => network.run()).to.throw(`There is no valid path for Package ${packageToSend.name} from ${packageToSend.location.name} to ${packageToSend.destination.name}.`);
     });
 
     it('should throw an error when there are no trains available' , () => {
@@ -149,16 +149,11 @@ describe('Network-Simple', () => {
 });
 
 describe('Network-Complex', () => {
-    // it('should run the simulation correctly and return results', () => {
-    //     const network = new Network();
-    //     network.loadFromFile('src/data/network-complex.json');
+    it('should run the simulation correctly without error', () => {
+        const network = new Network();
+        network.loadFromFile('src/data/network-complex.json');
 
-    //     const result = network.run();
-    //     expect(result.trainOperations).to.have.lengthOf(4);
-    //     expect(result.trainOperations[0]).to.equal('T1 moved from B to A in 30 minutes.');
-    //     expect(result.trainOperations[1]).to.equal('T1 picked up Q from A. T1 located at station A.');
-    //     expect(result.trainOperations[2]).to.equal('T1 moved from A to C in 40 minutes.');
-    //     expect(result.trainOperations[3]).to.equal('T1 dropped off Q at C. T1 is located at station C.');
-    //     expect(result.totalTime).to.equal(70);
-    // });
+        const result = network.run();
+        expect(result.totalTime).greaterThanOrEqual(0);
+    });
 })

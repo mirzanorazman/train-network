@@ -4,6 +4,8 @@ const chai_1 = require("chai");
 const Network_1 = require("../../Network");
 const Station_1 = require("../../models/Station");
 const Track_1 = require("../../models/Track");
+const Package_1 = require("../../models/Package");
+const Train_1 = require("../../models/Train");
 describe('Network-Simple', () => {
     it('should load data from JSON file', () => {
         const network = new Network_1.Network();
@@ -57,10 +59,68 @@ describe('Network-Simple', () => {
         (0, chai_1.expect)(result.trainOperations[3]).to.equal('T1 dropped off Q at C. T1 is located at station C.');
         (0, chai_1.expect)(result.totalTime).to.equal(70);
     });
-    // TODO: Negative test cases
-    // 1. Invalid package deliver location/destination
-    // 2. Invalid train location
-    // 3. Unreachable train-package destination
+    it('should throw an error when there are unreachable package location', () => {
+        const stationA = new Station_1.Station('A');
+        const stationB = new Station_1.Station('B');
+        const stationC = new Station_1.Station('C');
+        const track1 = new Track_1.Track('T1', stationA, stationB, 30);
+        const trainA = new Train_1.Train('T11', 5, stationA);
+        const packageToSend = new Package_1.Package('P1', 10, stationC, stationB);
+        const network = new Network_1.Network();
+        network.stations.push(stationA, stationB, stationC);
+        network.tracks.push(track1);
+        network.trains.push(trainA);
+        network.packages.push(packageToSend);
+        (0, chai_1.expect)(() => network.run()).to.throw(`There is no valid path for Package ${packageToSend.name} from ${packageToSend.location.name} to ${packageToSend.destination.name}.`);
+    });
+    it('should throw an error when there are unreachable package destination', () => {
+        const stationA = new Station_1.Station('A');
+        const stationB = new Station_1.Station('B');
+        const stationC = new Station_1.Station('C');
+        const track1 = new Track_1.Track('T1', stationA, stationB, 30);
+        const trainA = new Train_1.Train('T11', 5, stationA);
+        const packageToSend = new Package_1.Package('P1', 10, stationB, stationC);
+        const network = new Network_1.Network();
+        network.stations.push(stationA, stationB, stationC);
+        network.tracks.push(track1);
+        network.trains.push(trainA);
+        network.packages.push(packageToSend);
+        (0, chai_1.expect)(() => network.run()).to.throw(`There is no valid path for Package ${packageToSend.name} from ${packageToSend.location.name} to ${packageToSend.destination.name}.`);
+    });
+    it('should throw an error when there are no trains available', () => {
+        const stationA = new Station_1.Station('A');
+        const stationB = new Station_1.Station('B');
+        const stationC = new Station_1.Station('C');
+        const track1 = new Track_1.Track('T1', stationA, stationB, 30);
+        const track2 = new Track_1.Track('T2', stationB, stationC, 10);
+        const track3 = new Track_1.Track('T3', stationA, stationC, 50);
+        const packageA = new Package_1.Package('P1', 10, stationA, stationB);
+        const network = new Network_1.Network();
+        network.stations.push(stationA, stationB, stationC);
+        network.tracks.push(track1, track2, track3);
+        network.packages.push(packageA);
+        (0, chai_1.expect)(() => network.run()).to.throw('There are no available trains for transport.');
+    });
+    it('should throw an error when there are no package available', () => {
+        const stationA = new Station_1.Station('A');
+        const stationB = new Station_1.Station('B');
+        const stationC = new Station_1.Station('C');
+        const track1 = new Track_1.Track('T1', stationA, stationB, 30);
+        const track2 = new Track_1.Track('T2', stationB, stationC, 10);
+        const track3 = new Track_1.Track('T3', stationA, stationC, 50);
+        const trainA = new Train_1.Train('T11', 5, stationA);
+        const network = new Network_1.Network();
+        network.stations.push(stationA, stationB, stationC);
+        network.tracks.push(track1, track2, track3);
+        network.trains.push(trainA);
+        (0, chai_1.expect)(() => network.run()).to.throw('There are no available packages to pickup.');
+    });
 });
 describe('Network-Complex', () => {
+    it('should run the simulation correctly without error', () => {
+        const network = new Network_1.Network();
+        network.loadFromFile('src/data/network-complex.json');
+        const result = network.run();
+        (0, chai_1.expect)(result.totalTime).greaterThanOrEqual(0);
+    });
 });

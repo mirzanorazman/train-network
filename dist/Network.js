@@ -35,6 +35,8 @@ class Network {
         this.tracks = [];
         this.packages = [];
         this.trains = [];
+        this.totalTime = 0;
+        this.trainOperations = [];
     }
     // Load data from JSON file and populate stations, tracks, packages, and trains
     loadFromFile(filePath) {
@@ -78,6 +80,9 @@ class Network {
         });
         while (unvisited.size > 0) {
             let current = this.getClosestStation(unvisited, distances);
+            if (!current) {
+                return null; // Possible disconnected node
+            }
             if (current === end)
                 break;
             unvisited.delete(current);
@@ -103,6 +108,20 @@ class Network {
         }
         return { path, time: distances.get(end) };
     }
+    getReachableTrains(packageObj) {
+        const pathToDropOff = this.findShortestPath(packageObj.location, packageObj.destination);
+        if (!pathToDropOff) {
+            throw new Error(`There is no valid path for Package ${packageObj.name} from ${packageObj.location.name} to ${packageObj.destination.name}.`);
+        }
+        const reachableTrains = new Map();
+        for (const train of this.trains) {
+            const path = this.findShortestPath(train.location, packageObj.location);
+            if (!path)
+                break;
+            reachableTrains.set(train, path.time);
+        }
+        return new Map([...reachableTrains.entries()].sort((a, b) => a[1] - b[1]));
+    }
     getNeighbors(station) {
         return this.tracks
             .filter(track => track.start === station)
@@ -120,38 +139,61 @@ class Network {
         });
         return closestStation;
     }
-    run() {
-        let totalTime = 0;
-        const trainOperations = [];
-        const errors = [];
-        // Implement the logic for moving the train, picking up, and dropping off packages
-        const train = this.trains[0];
-        const packageToSend = this.packages[0];
-        const pathToPickup = this.findShortestPath(train.location, packageToSend.location);
-        if (!pathToPickup) {
-            errors.push(`Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
-            return { trainOperations, totalTime, errors };
-        }
-        // Move the train, accumulate time
-        totalTime += pathToPickup.time;
-        train.location = packageToSend.location;
-        trainOperations.push(`${train.name} moved from ${pathToPickup.path[0].name} to ${pathToPickup.path[pathToPickup.path.length - 1].name} in ${pathToPickup.time} minutes.`);
-        // Collect package
-        if (train.canLoad(packageToSend)) {
-            train.trainLoad.push(packageToSend);
-            trainOperations.push(`${train.name} picked up ${packageToSend.name} from ${packageToSend.location.name}. ${train.name} located at station ${train.location.name}.`);
-        }
+    dropOffPackage(train, packageToSend) {
+        train.trainLoad.shift();
+        this.trainOperations.push(`${train.name} dropped off ${packageToSend.name} at ${packageToSend.destination.name}. ${train.name} is located at station ${train.location.name}.`);
+        // Remove the package from the array
+        this.packages = this.packages.filter(p => p.name !== packageToSend.name);
+    }
+    moveTrainToDestination(train, packageToSend) {
         const pathToDropOff = this.findShortestPath(packageToSend.location, packageToSend.destination);
         if (!pathToDropOff) {
-            errors.push(`Destination for Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
+            throw new Error(`Destination for Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
         }
-        totalTime += pathToDropOff === null || pathToDropOff === void 0 ? void 0 : pathToDropOff.time;
+        this.totalTime += pathToDropOff === null || pathToDropOff === void 0 ? void 0 : pathToDropOff.time;
         train.location = packageToSend.destination;
-        trainOperations.push(`${train.name} moved from ${pathToDropOff === null || pathToDropOff === void 0 ? void 0 : pathToDropOff.path[0].name} to ${pathToDropOff === null || pathToDropOff === void 0 ? void 0 : pathToDropOff.path[(pathToDropOff === null || pathToDropOff === void 0 ? void 0 : pathToDropOff.path.length) - 1].name} in ${pathToDropOff === null || pathToDropOff === void 0 ? void 0 : pathToDropOff.time} minutes.`);
-        // Drop off package
-        train.trainLoad.shift();
-        trainOperations.push(`${train.name} dropped off ${packageToSend.name} at ${packageToSend.destination.name}. ${train.name} is located at station ${train.location.name}.`);
-        return { trainOperations, totalTime, errors };
+        this.trainOperations.push(`${train.name} moved from ${pathToDropOff === null || pathToDropOff === void 0 ? void 0 : pathToDropOff.path[0].name} to ${pathToDropOff === null || pathToDropOff === void 0 ? void 0 : pathToDropOff.path[(pathToDropOff === null || pathToDropOff === void 0 ? void 0 : pathToDropOff.path.length) - 1].name} in ${pathToDropOff === null || pathToDropOff === void 0 ? void 0 : pathToDropOff.time} minutes.`);
+    }
+    pickupPackage(train, packageToSend) {
+        if (train.canLoad(packageToSend)) {
+            train.trainLoad.push(packageToSend);
+            this.trainOperations.push(`${train.name} picked up ${packageToSend.name} from ${packageToSend.location.name}. ${train.name} located at station ${train.location.name}.`);
+        }
+    }
+    moveTrainToStation(train, packageToSend) {
+        const pathToPickup = this.findShortestPath(train.location, packageToSend.location);
+        if (!pathToPickup) {
+            throw new Error(`Package ${packageToSend.name} is unreachable from ${train.location.name} for ${train.name}.`);
+        }
+        // Move the train, accumulate time
+        this.totalTime += pathToPickup.time;
+        train.location = packageToSend.location;
+        this.trainOperations.push(`${train.name} moved from ${pathToPickup.path[0].name} to ${pathToPickup.path[pathToPickup.path.length - 1].name} in ${pathToPickup.time} minutes.`);
+    }
+    transportPackage(reachableTrains, packageObj) {
+        for (const [train, time] of reachableTrains) {
+            if (train.canLoad(packageObj)) {
+                this.moveTrainToStation(train, packageObj);
+                this.pickupPackage(train, packageObj);
+                this.moveTrainToDestination(train, packageObj);
+                this.dropOffPackage(train, packageObj);
+                return;
+            }
+            console.log(`No train can carry package ${packageObj.name} within capacity.`);
+        }
+    }
+    run() {
+        if (!this.trains.length) {
+            throw new Error(`There are no available trains for transport.`);
+        }
+        if (!this.packages.length) {
+            throw new Error(`There are no available packages to pickup.`);
+        }
+        this.packages.forEach(packageObj => {
+            const reachableTrains = this.getReachableTrains(packageObj);
+            this.transportPackage(reachableTrains, packageObj);
+        });
+        return { trainOperations: this.trainOperations, totalTime: this.totalTime };
     }
 }
 exports.Network = Network;

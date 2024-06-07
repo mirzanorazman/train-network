@@ -3,15 +3,18 @@ import { Network } from './Network';
 const main = (filePath: string) => {
     const network = new Network();
     network.loadFromFile(filePath);
-    const result = network.run();
 
-    if (result.errors.length > 0) {
-        console.error("Errors encountered:");
-        result.errors.forEach(error => console.error(error));
-    } else {
+    try {
+        const result = network.run();
         result.trainOperations.forEach(operation => console.log(operation));
         console.log(`Total time taken: ${result.totalTime} minutes.`);
+
+    } catch (error) {
+        console.error("An error occurred:", error);
     }
+
+   
+    
 };
 
 const args = process.argv.slice(2);
