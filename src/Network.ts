@@ -138,35 +138,39 @@ export class Network {
     }
 
     run(): Result {
-        
-
-        // Implement the logic for moving the train, picking up, and dropping off packages
         if (!this.trains.length) {
             throw new Error(`There are no available trains for transport.`)
         }
         if (!this.packages.length) {
             throw new Error(`There are no available packages to pickup.`)
         }
+
+        // while(this.packages.length > 0) {
+        //     this.assignPackagesToTrain();
+        // }
         
         const train = this.trains[0];
         const packageToSend = this.packages[0];
 
-        const pathToPickup = this.findShortestPath(train.location, packageToSend.location);
-        if (!pathToPickup) {
-            throw new Error(`Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
-        }
-        
-        // Move the train, accumulate time
-        this.totalTime += pathToPickup.time;
-        train.location = packageToSend.location;
-        this.trainOperations.push(`${train.name} moved from ${pathToPickup.path[0].name} to ${pathToPickup.path[pathToPickup.path.length - 1].name} in ${pathToPickup.time} minutes.`);
+        this.moveTrainToStation(train, packageToSend);
 
         // Collect package
-        if (train.canLoad(packageToSend)) {
-            train.trainLoad.push(packageToSend);
-            this.trainOperations.push(`${train.name} picked up ${packageToSend.name} from ${packageToSend.location.name}. ${train.name} located at station ${train.location.name}.`)
-        }
+        this.pickupPackage(train, packageToSend);
 
+        this.moveTrainToDestination(train, packageToSend);
+
+        // Drop off package
+        this.dropoffPackage(train, packageToSend);
+
+        return {trainOperations: this.trainOperations, totalTime: this.totalTime};
+    }
+
+    private dropoffPackage(train: Train, packageToSend: Package) {
+        train.trainLoad.shift();
+        this.trainOperations.push(`${train.name} dropped off ${packageToSend.name} at ${packageToSend.destination.name}. ${train.name} is located at station ${train.location.name}.`);
+    }
+
+    private moveTrainToDestination(train: Train, packageToSend: Package) {
         const pathToDropOff = this.findShortestPath(packageToSend.location, packageToSend.destination);
         if (!pathToDropOff) {
             throw new Error(`Destination for Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
@@ -175,11 +179,24 @@ export class Network {
         this.totalTime += pathToDropOff?.time!;
         train.location = packageToSend.destination;
         this.trainOperations.push(`${train.name} moved from ${pathToDropOff?.path[0].name} to ${pathToDropOff?.path[pathToDropOff?.path.length - 1].name} in ${pathToDropOff?.time} minutes.`);
+    }
 
-        // Drop off package
-        train.trainLoad.shift();
-        this.trainOperations.push(`${train.name} dropped off ${packageToSend.name} at ${packageToSend.destination.name}. ${train.name} is located at station ${train.location.name}.`)
+    private pickupPackage(train: Train, packageToSend: Package) {
+        if (train.canLoad(packageToSend)) {
+            train.trainLoad.push(packageToSend);
+            this.trainOperations.push(`${train.name} picked up ${packageToSend.name} from ${packageToSend.location.name}. ${train.name} located at station ${train.location.name}.`);
+        }
+    }
 
-        return {trainOperations: this.trainOperations, totalTime: this.totalTime};
+    private moveTrainToStation(train: Train, packageToSend: Package) {
+        const pathToPickup = this.findShortestPath(train.location, packageToSend.location);
+        if (!pathToPickup) {
+            throw new Error(`Package ${packageToSend.name} is unreachable from ${train.location.name}.`);
+        }
+
+        // Move the train, accumulate time
+        this.totalTime += pathToPickup.time;
+        train.location = packageToSend.location;
+        this.trainOperations.push(`${train.name} moved from ${pathToPickup.path[0].name} to ${pathToPickup.path[pathToPickup.path.length - 1].name} in ${pathToPickup.time} minutes.`);
     }
 }
