@@ -116,13 +116,13 @@ export class Network {
 
     }
 
-    getNeighbors(station: Station): {station : Station, time: number}[] {
+    private getNeighbors(station: Station): {station : Station, time: number}[] {
         return this.tracks
             .filter(track => track.start === station)
             .map(track => ({station: track.end, time: track.journeyTimeInMinutes}));
     }
 
-    getClosestStation(unvisited: Set<Station>, distances: Map<Station, number>): Station {
+    private getClosestStation(unvisited: Set<Station>, distances: Map<Station, number>): Station {
         let minDistance = Infinity;
         let closestStation: Station | null = null;
 
@@ -135,34 +135,6 @@ export class Network {
         });
 
         return closestStation!;
-    }
-
-    run(): Result {
-        if (!this.trains.length) {
-            throw new Error(`There are no available trains for transport.`)
-        }
-        if (!this.packages.length) {
-            throw new Error(`There are no available packages to pickup.`)
-        }
-
-        // while(this.packages.length > 0) {
-        //     this.assignPackagesToTrain();
-        // }
-        
-        const train = this.trains[0];
-        const packageToSend = this.packages[0];
-
-        this.moveTrainToStation(train, packageToSend);
-
-        // Collect package
-        this.pickupPackage(train, packageToSend);
-
-        this.moveTrainToDestination(train, packageToSend);
-
-        // Drop off package
-        this.dropoffPackage(train, packageToSend);
-
-        return {trainOperations: this.trainOperations, totalTime: this.totalTime};
     }
 
     private dropoffPackage(train: Train, packageToSend: Package) {
@@ -198,5 +170,28 @@ export class Network {
         this.totalTime += pathToPickup.time;
         train.location = packageToSend.location;
         this.trainOperations.push(`${train.name} moved from ${pathToPickup.path[0].name} to ${pathToPickup.path[pathToPickup.path.length - 1].name} in ${pathToPickup.time} minutes.`);
+    }
+
+    run(): Result {
+        if (!this.trains.length) {
+            throw new Error(`There are no available trains for transport.`)
+        }
+        if (!this.packages.length) {
+            throw new Error(`There are no available packages to pickup.`)
+        }
+
+        // while(this.packages.length > 0) {
+        //     this.assignPackagesToTrain();
+        // }
+        
+        const train = this.trains[0];
+        const packageToSend = this.packages[0];
+
+        this.moveTrainToStation(train, packageToSend);
+        this.pickupPackage(train, packageToSend);
+        this.moveTrainToDestination(train, packageToSend);
+        this.dropoffPackage(train, packageToSend);
+
+        return {trainOperations: this.trainOperations, totalTime: this.totalTime};
     }
 }
